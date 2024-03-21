@@ -30,8 +30,6 @@ func (buf *Buffer) WriteAbstract(data interface{}) error {
 	switch data.(type) {
 	case Bytes:
 		buf.Write(data.(Bytes).Bytes())
-	case *Bytes:
-		buf.Write(data.(*Bytes).Bytes())
 	case byte, bool, int, uint:
 		buf.Write([]byte{data.(byte)})
 	case []byte:
