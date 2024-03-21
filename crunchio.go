@@ -10,7 +10,7 @@ type Bytes interface {
 }
 
 type Buffer struct {
-	*crunch.Buffer
+	crunch.Buffer
 }
 
 func NewBuffer(slices ...[]byte) (*Buffer) {
