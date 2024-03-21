@@ -1,7 +1,7 @@
 package crunchio
 
 import (
-	"github.com/superwhiskers/crunch/v3"
+	crunch "github.com/superwhiskers/crunch/v3"
 )
 
 //Bytes requires a type to be able to represent itself as a byte slice
