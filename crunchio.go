@@ -1,6 +1,9 @@
 package crunchio
 
 import (
+	"fmt"
+	"io"
+
 	crunch "github.com/superwhiskers/crunch/v3"
 )
 
@@ -65,7 +68,7 @@ func (buf *Buffer) Write(p []byte) (int, error) {
 	}
 	buf.Grow(int64(len(p)))
 	buf.WriteBytesNext(p)
-	return len(p), buf.sync()
+	return len(p), nil
 }
 
 //Read implements io.Reader
@@ -90,7 +93,7 @@ func (buf *Buffer) Seek(offset int64, whence int) (int64, error) {
 	case io.SeekEnd:
 		buf.SeekByte(buf.ByteCapacity()-offset, false)
 	default:
-		return 0, ERROR_SEEK_WHENCE
+		return 0, fmt.Errorf("crunchio: invalid whence for seek")
 	}
 	return buf.ByteOffset(), nil
 }
