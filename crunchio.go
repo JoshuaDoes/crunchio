@@ -83,6 +83,12 @@ func (buf *Buffer) Read(p []byte) (int, error) {
 	return len(bytes), nil
 }
 
+//ReadByte implements io.ByteReader
+func (buf *Buffer) ReadByte() (byte, error) {
+	b := buf.ReadByteNext()
+	return b, nil
+}
+
 //Seek implements io.Seeker
 func (buf *Buffer) Seek(offset int64, whence int) (int64, error) {
 	switch whence {
