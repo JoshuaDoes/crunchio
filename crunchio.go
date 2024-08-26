@@ -76,11 +76,15 @@ func (buf *Buffer) Read(p []byte) (int, error) {
 	if p == nil || len(p) <= 0 {
 		return 0, nil
 	}
-	bytes := buf.ReadBytesNext(int64(len(p)))
-	for i := 0; i < len(bytes); i++ {
-		p[i] = bytes[i]
+	toRead := buf.ByteCapacity() - buf.ByteOffset()
+	if toRead > 0 {
+		bytes := buf.ReadBytesNext(toRead)
+		for i := 0; i < len(bytes); i++ {
+			p[i] = bytes[i]
+		}
+		return len(bytes), nil
 	}
-	return len(bytes), nil
+	return 0, io.EOF
 }
 
 //ReadByte implements io.ByteReader
