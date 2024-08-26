@@ -77,6 +77,9 @@ func (buf *Buffer) Read(p []byte) (int, error) {
 		return 0, nil
 	}
 	toRead := buf.ByteCapacity() - buf.ByteOffset()
+	if toRead > int64(len(p)) {
+		toRead = int64(len(p))
+	}
 	if toRead > 0 {
 		bytes := buf.ReadBytesNext(toRead)
 		for i := 0; i < len(bytes); i++ {
