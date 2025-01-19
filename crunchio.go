@@ -111,6 +111,12 @@ func (buf *Buffer) Seek(offset int64, whence int) (int64, error) {
 	return buf.ByteOffset(), nil
 }
 
+//Close implements io.Closer
+func (buf *Buffer) Close() error {
+	buf.Reset()
+	return nil
+}
+
 //Size returns the byte size of the buffer
 func (buf *Buffer) Size() int {
 	return int(buf.ByteCapacity())
