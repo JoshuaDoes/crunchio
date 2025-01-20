@@ -1,4 +1,4 @@
-package main
+package crunchio
 
 import (
 	"fmt"
