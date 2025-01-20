@@ -15,12 +15,13 @@ type Bytes interface {
 
 type Buffer struct {
 	sync.Mutex
+	name   string
+	stream bool
 	buffer *crunch.Buffer
 	parent *Buffer
 	length int64
 	offset int64
 	closed bool
-	name   string
 }
 
 func NewBuffer(name string, slices ...[]byte) *Buffer {
@@ -43,6 +44,20 @@ func (b *Buffer) GetName() string {
 		panic("GETNAME: buffer is nil")
 	}
 	return b.name
+}
+
+func (b *Buffer) SetStream(stream bool) {
+	if b == nil {
+		panic("SETSTREAM: buffer is nil")
+	}
+	b.stream = stream
+}
+
+func (b *Buffer) GetStream() bool {
+	if b == nil {
+		panic("GETSTREAM: buffer is nil")
+	}
+	return b.stream
 }
 
 func (b *Buffer) Read(dst []byte) (read int, err error) {
@@ -71,7 +86,11 @@ func (b *Buffer) Read(dst []byte) (read int, err error) {
 		toRead = int64(len(dst))
 	}
 	if toRead == 0 {
-		return 0, nil
+		if b.GetStream() {
+			return 0, nil
+		} else {
+			return 0, io.EOF
+		}
 	}
 	bytes := buffer.ReadBytes(b.offset, toRead)
 	read = copy(dst, bytes)
@@ -97,7 +116,11 @@ func (b *Buffer) ReadOffset(dst []byte, offset int64) (read int, err error) {
 		toRead = int64(len(dst))
 	}
 	if toRead == 0 {
-		return 0, nil
+		if b.GetStream() {
+			return 0, nil
+		} else {
+			return 0, io.EOF
+		}
 	}
 	bytes := buffer.ReadBytes(offset, toRead)
 	read = copy(dst, bytes)
@@ -283,9 +306,6 @@ func (b *Buffer) Close() error {
 	b.Lock()
 	defer b.Unlock()
 	b.closed = true
-	if b.parent != nil {
-		return b.parent.Close()
-	}
 	return nil
 }
 
