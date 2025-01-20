@@ -336,6 +336,8 @@ func (b *Buffer) Reference() *Buffer {
 		panic("REFERENCE: buffer is nil")
 	}
 	nb := new(Buffer)
+	nb.name = b.name
+	nb.stream = b.stream
 	nb.parent = b
 	return nb
 }
