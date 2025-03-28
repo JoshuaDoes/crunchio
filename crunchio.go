@@ -14,14 +14,15 @@ type Bytes interface {
 }
 
 type Buffer struct {
-	sync.Mutex
-	name   string
-	stream bool
-	buffer *crunch.Buffer
-	parent *Buffer
-	length int64
-	offset int64
-	closed bool
+	sync.Mutex //Unique mutex for callers to use
+	lock       sync.Mutex
+	name       string
+	stream     bool
+	buffer     *crunch.Buffer
+	parent     *Buffer
+	length     int64
+	offset     int64
+	closed     bool
 }
 
 func NewBuffer(name string, slices ...[]byte) *Buffer {
@@ -64,8 +65,8 @@ func (b *Buffer) Read(dst []byte) (read int, err error) {
 	if b == nil {
 		panic("READ: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	if b.Closed() {
 		return 0, io.EOF
 	}
@@ -102,8 +103,8 @@ func (b *Buffer) ReadOffset(dst []byte, offset int64) (read int, err error) {
 	if b == nil {
 		panic("READOFFSET: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	if b.Closed() {
 		return 0, io.EOF
 	}
@@ -131,8 +132,8 @@ func (b *Buffer) Write(src []byte) (wrote int, err error) {
 	if b == nil {
 		panic("WRITE: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	if b.Closed() {
 		return 0, io.EOF
 	}
@@ -159,8 +160,8 @@ func (b *Buffer) WriteOffset(src []byte, offset int64) (wrote int, err error) {
 	if b == nil {
 		panic("WRITEOFFSET: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	if b.Closed() {
 		return 0, io.EOF
 	}
@@ -180,9 +181,9 @@ func (b *Buffer) WriteOffset(src []byte, offset int64) (wrote int, err error) {
 func (b *Buffer) WriteAbstract(data any) (wrote int, err error) {
 	buffer := crunch.NewBuffer()
 
-	switch data.(type) {
+	switch data := data.(type) {
 	case io.Reader:
-		bytes, readErr := io.ReadAll(data.(io.Reader))
+		bytes, readErr := io.ReadAll(data)
 		if readErr != nil {
 			err = readErr
 			return
@@ -190,7 +191,7 @@ func (b *Buffer) WriteAbstract(data any) (wrote int, err error) {
 		buffer.Grow(int64(len(bytes)))
 		buffer.WriteBytes(0, bytes)
 	case Bytes:
-		bytes := data.(Bytes).Bytes()
+		bytes := data.Bytes()
 		buffer.Grow(int64(len(bytes)))
 		buffer.WriteBytes(0, bytes)
 	case byte, bool, int, uint:
@@ -201,65 +202,65 @@ func (b *Buffer) WriteAbstract(data any) (wrote int, err error) {
 		buffer.Grow(int64(len(bytes)))
 		buffer.WriteBytes(0, bytes)
 	case []string:
-		strings := data.([]string)
+		strings := data
 		for i := 0; i < len(strings); i++ {
 			buffer.Grow(int64(len(strings[i])))
 			buffer.WriteBytesNext([]byte(strings[i]))
 		}
 	case int16:
 		buffer.Grow(2)
-		buffer.WriteI16LE(0, []int16{data.(int16)})
+		buffer.WriteI16LE(0, []int16{data})
 	case []int16:
-		numbers := data.([]int16)
+		numbers := data
 		buffer.Grow(int64(2 * len(numbers)))
 		buffer.WriteI16LE(0, numbers)
 	case int32:
 		buffer.Grow(4)
-		buffer.WriteI32LE(0, []int32{data.(int32)})
+		buffer.WriteI32LE(0, []int32{data})
 	case []int32:
-		numbers := data.([]int32)
+		numbers := data
 		buffer.Grow(int64(4 * len(numbers)))
 		buffer.WriteI32LE(0, numbers)
 	case int64:
 		buffer.Grow(8)
-		buffer.WriteI64LE(0, []int64{data.(int64)})
+		buffer.WriteI64LE(0, []int64{data})
 	case []int64:
-		numbers := data.([]int64)
+		numbers := data
 		buffer.Grow(int64(8 * len(numbers)))
 		buffer.WriteI64LE(0, numbers)
 	case uint16:
 		buffer.Grow(2)
-		buffer.WriteU16LE(0, []uint16{data.(uint16)})
+		buffer.WriteU16LE(0, []uint16{data})
 	case []uint16:
-		numbers := data.([]uint16)
+		numbers := data
 		buffer.Grow(int64(2 * len(numbers)))
 		buffer.WriteU16LE(0, numbers)
 	case uint32:
 		buffer.Grow(4)
-		buffer.WriteU32LE(0, []uint32{data.(uint32)})
+		buffer.WriteU32LE(0, []uint32{data})
 	case []uint32:
-		numbers := data.([]uint32)
+		numbers := data
 		buffer.Grow(int64(4 * len(numbers)))
 		buffer.WriteU32LE(0, numbers)
 	case uint64:
 		buffer.Grow(8)
-		buffer.WriteU64LE(0, []uint64{data.(uint64)})
+		buffer.WriteU64LE(0, []uint64{data})
 	case []uint64:
-		numbers := data.([]uint64)
+		numbers := data
 		buffer.Grow(int64(8 * len(numbers)))
 		buffer.WriteU64LE(0, numbers)
 	case float32:
 		buffer.Grow(4)
-		buffer.WriteF32LE(0, []float32{data.(float32)})
+		buffer.WriteF32LE(0, []float32{data})
 	case []float32:
-		numbers := data.([]float32)
+		numbers := data
 		buffer.Grow(int64(4 * len(numbers)))
 		buffer.WriteF32LE(0, numbers)
 	case float64:
 		buffer.Grow(8)
-		buffer.WriteF64LE(0, []float64{data.(float64)})
+		buffer.WriteF64LE(0, []float64{data})
 	case []float64:
-		numbers := data.([]float64)
+		numbers := data
 		buffer.Grow(int64(8 * len(numbers)))
 		buffer.WriteF64LE(0, numbers)
 	default:
@@ -275,8 +276,8 @@ func (b *Buffer) Seek(to int64, whence int) (offset int64, err error) {
 	if b == nil {
 		panic("SEEK: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	if b.Closed() {
 		return 0, io.EOF
 	}
@@ -303,8 +304,8 @@ func (b *Buffer) Close() error {
 	if b == nil {
 		panic("CLOSE: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	b.closed = true
 	return nil
 }
@@ -346,8 +347,8 @@ func (b *Buffer) Copy() *Buffer {
 	if b == nil {
 		panic("COPY: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	nb := new(Buffer)
 	nb.buffer = crunch.NewBuffer(b.buffer.Bytes())
 	nb.length = b.length
@@ -358,8 +359,8 @@ func (b *Buffer) Reset() {
 	if b == nil {
 		panic("RESET: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	b.length = 0
 	b.offset = 0
 	if b.parent != nil {
@@ -390,8 +391,8 @@ func (b *Buffer) Bytes() []byte {
 	if b == nil {
 		panic("BYTES: buffer is nil")
 	}
-	b.Lock()
-	defer b.Unlock()
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	return b.Buffer().Bytes()
 }
 
