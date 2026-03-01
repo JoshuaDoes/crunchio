@@ -198,11 +198,10 @@ func (b *Buffer) WriteAbstract(data any) (wrote int, err error) {
 		buffer.Grow(1)
 		buffer.WriteByte(0, data.(byte))
 	case []byte:
-		bytes := data.([]byte)
-		buffer.Grow(int64(len(bytes)))
-		buffer.WriteBytes(0, bytes)
+		buffer.Grow(int64(len(data)))
+		buffer.WriteBytes(0, data)
 	case string:
-		bytes := []byte(data.(string))
+		bytes := []byte(data)
 		buffer.Grow(int64(len(bytes)))
 		buffer.WriteBytes(0, bytes)
 	case []string:
